@@ -462,7 +462,7 @@ const S = {
   tab: 'stats',
   loading: false,
   timer: null,
-  clockTimer: null,
+  clockTimer: null, // unused, kept for reference
 };
 
 /* ═══════════════════════════════════════════════
@@ -1110,37 +1110,11 @@ function demoData() {
 /* ═══════════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════════ */
-function tickClocks() {
-  let changed = false;
-  for (const m of S.matches) {
-    if (!m.isLive || m.isHalfTime) continue;
-    const raw = m.statusText || '';
-    // Don't tick stoppage time (e.g. 45'+3') or non-numeric clocks
-    if (raw.includes('+')) continue;
-    const mins = parseInt(raw) || 0;
-    if (mins > 0 && mins < 90) {
-      m.statusText = (mins + 1) + "'";
-      changed = true;
-    }
-  }
-  if (changed) {
-    renderList();
-    // Only re-render the clock badge in the detail header — avoid full re-render
-    const badge = document.querySelector('.score-clock');
-    if (badge) {
-      const m = S.matches.find(x => x.id === S.selectedId);
-      if (m?.isLive) {
-        badge.innerHTML = `<span class="clock-badge" style="background:rgba(0,176,80,.12);color:#00b050;border:1px solid rgba(0,176,80,.3)">● ${m.statusText}</span>`;
-      }
-    }
-  }
-}
 
 function init() {
   document.getElementById('date-display').textContent = toDisplay(S.date);
   loadMatches();
   S.timer = setInterval(loadMatches, 30000);
-  S.clockTimer = setInterval(tickClocks, 1000);
 }
 
 init();
