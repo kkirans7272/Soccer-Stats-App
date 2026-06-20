@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sports Rookie — World Cup 2026</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -216,7 +217,8 @@
 
     .card-teams { display: flex; flex-direction: column; gap: 7px; }
     .team-row { display: flex; align-items: center; gap: 9px; }
-    .team-flag { width: 28px; height: 19px; text-align: center; display:flex; align-items:center; justify-content:center; }
+    .team-flag { width: 30px; text-align: center; display:flex; align-items:center; justify-content:center; }
+    .team-flag img, .team-flag-lg img { border-radius: 3px; }
     .team-name { flex: 1; font-size: 14px; font-weight: 500; color: #d0d0d0; }
     .team-name.bold { font-weight: 700; color: #fff; }
     .team-score { font-size: 20px; font-weight: 900; color: #fff; min-width: 22px; text-align: right; }
@@ -285,7 +287,7 @@
       gap: 16px;
     }
     .team-side { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-    .team-flag-lg { width: 64px; height: 43px; display:flex; align-items:center; justify-content:center; }
+    .team-flag-lg { display:flex; align-items:center; justify-content:center; }
     .team-name-lg { font-size: 17px; font-weight: 700; text-align: center; }
     .team-abbr { font-size: 11px; color: #555; }
 
@@ -466,42 +468,46 @@ const S = {
 };
 
 /* ═══════════════════════════════════════════════
-   FLAGS — ISO codes → flagcdn.com images
-   (emoji flags don't render on Windows)
+   FLAGS — emoji rendered via Twemoji (SVG images)
+   Works on all platforms including Windows
 ═══════════════════════════════════════════════ */
 const FLAG_MAP = {
-  'united states':'us','usa':'us','u.s.':'us','mexico':'mx','canada':'ca',
-  'brazil':'br','argentina':'ar','uruguay':'uy','colombia':'co','chile':'cl',
-  'ecuador':'ec','peru':'pe','paraguay':'py','venezuela':'ve','bolivia':'bo',
-  'france':'fr','germany':'de','spain':'es','england':'gb-eng','italy':'it',
-  'portugal':'pt','netherlands':'nl','belgium':'be','croatia':'hr','switzerland':'ch',
-  'denmark':'dk','sweden':'se','poland':'pl','austria':'at','ukraine':'ua',
-  'serbia':'rs','turkey':'tr','greece':'gr','czech republic':'cz','slovakia':'sk',
-  'hungary':'hu','romania':'ro','wales':'gb-wls','scotland':'gb-sct','norway':'no',
-  'finland':'fi','ireland':'ie','albania':'al','slovenia':'si','georgia':'ge',
-  'japan':'jp','south korea':'kr','australia':'au','iran':'ir','saudi arabia':'sa',
-  'qatar':'qa','iraq':'iq','china':'cn','indonesia':'id','vietnam':'vn',
-  'new zealand':'nz','uzbekistan':'uz','jordan':'jo','oman':'om','kuwait':'kw',
-  'morocco':'ma','senegal':'sn','nigeria':'ng','cameroon':'cm','ghana':'gh',
-  'egypt':'eg','algeria':'dz','tunisia':'tn','mali':'ml','ivory coast':'ci',
-  'costa rica':'cr','panama':'pa','jamaica':'jm','honduras':'hn','el salvador':'sv',
-  'united arab emirates':'ae','bahrain':'bh','south africa':'za','tanzania':'tz',
-  'kenya':'ke','angola':'ao','congo':'cg','zambia':'zm',
+  'united states':'🇺🇸','usa':'🇺🇸','u.s.':'🇺🇸','mexico':'🇲🇽','canada':'🇨🇦',
+  'brazil':'🇧🇷','argentina':'🇦🇷','uruguay':'🇺🇾','colombia':'🇨🇴','chile':'🇨🇱',
+  'ecuador':'🇪🇨','peru':'🇵🇪','paraguay':'🇵🇾','venezuela':'🇻🇪','bolivia':'🇧🇴',
+  'france':'🇫🇷','germany':'🇩🇪','spain':'🇪🇸','england':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','italy':'🇮🇹',
+  'portugal':'🇵🇹','netherlands':'🇳🇱','belgium':'🇧🇪','croatia':'🇭🇷','switzerland':'🇨🇭',
+  'denmark':'🇩🇰','sweden':'🇸🇪','poland':'🇵🇱','austria':'🇦🇹','ukraine':'🇺🇦',
+  'serbia':'🇷🇸','turkey':'🇹🇷','greece':'🇬🇷','czech republic':'🇨🇿','slovakia':'🇸🇰',
+  'hungary':'🇭🇺','romania':'🇷🇴','wales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿','scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','norway':'🇳🇴',
+  'finland':'🇫🇮','ireland':'🇮🇪','albania':'🇦🇱','slovenia':'🇸🇮','georgia':'🇬🇪',
+  'japan':'🇯🇵','south korea':'🇰🇷','australia':'🇦🇺','iran':'🇮🇷','saudi arabia':'🇸🇦',
+  'qatar':'🇶🇦','iraq':'🇮🇶','china':'🇨🇳','indonesia':'🇮🇩','vietnam':'🇻🇳',
+  'new zealand':'🇳🇿','uzbekistan':'🇺🇿','jordan':'🇯🇴','oman':'🇴🇲','kuwait':'🇰🇼',
+  'morocco':'🇲🇦','senegal':'🇸🇳','nigeria':'🇳🇬','cameroon':'🇨🇲','ghana':'🇬🇭',
+  'egypt':'🇪🇬','algeria':'🇩🇿','tunisia':'🇹🇳','mali':'🇲🇱','ivory coast':'🇨🇮',
+  'costa rica':'🇨🇷','panama':'🇵🇦','jamaica':'🇯🇲','honduras':'🇭🇳','el salvador':'🇸🇻',
+  'united arab emirates':'🇦🇪','bahrain':'🇧🇭','south africa':'🇿🇦','tanzania':'🇹🇿',
+  'kenya':'🇰🇪','angola':'🇦🇴','congo':'🇨🇬','zambia':'🇿🇲',
 };
 
-function getFlagCode(name) {
-  if (!name) return null;
+function getFlag(name) {
+  if (!name) return '🏳️';
   const k = name.toLowerCase();
-  for (const [key, code] of Object.entries(FLAG_MAP)) {
-    if (k === key || k.startsWith(key) || key.startsWith(k)) return code;
+  for (const [key, flag] of Object.entries(FLAG_MAP)) {
+    if (k === key || k.startsWith(key) || key.startsWith(k)) return flag;
   }
-  return null;
+  return '🏳️';
 }
 
+// Wrap emoji in a span sized for the context; Twemoji converts it to SVG
 function flagImg(name, size = 28) {
-  const code = getFlagCode(name);
-  if (!code) return `<span style="font-size:${size}px;opacity:.4">🏳</span>`;
-  return `<img src="https://flagcdn.com/w${size * 2}/${code}.png" width="${size}" height="${Math.round(size * 0.67)}" style="border-radius:2px;object-fit:cover;vertical-align:middle" alt="${name}" onerror="this.style.display='none'">`;
+  const emoji = getFlag(name);
+  return `<span style="font-size:${size}px;line-height:1;display:inline-flex;align-items:center">${emoji}</span>`;
+}
+
+function parseTwemoji() {
+  twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });
 }
 
 /* ═══════════════════════════════════════════════
@@ -609,6 +615,7 @@ function parseESPN(data) {
       awayAbbr: away.team?.abbreviation || '',
       awayScore: parseInt(away.score || 0),
       awayFlag: away.team?.displayName || '',
+      // homeFlag/awayFlag store team name; flagImg() converts to emoji → Twemoji SVG
       statusText, isLive, isFinal, isHalfTime,
       matchDate: new Date(ev.date),
       venue: comp.venue?.fullName || '',
@@ -768,6 +775,7 @@ function renderList() {
   if (upcoming.length) { html += `<div class="section-hdr">Upcoming (${upcoming.length})</div>`;    upcoming.forEach(m => html += card(m)); }
   if (final.length)    { html += `<div class="section-hdr">Final Results (${final.length})</div>`; final.forEach(m => html += card(m)); }
   el.innerHTML = html;
+  parseTwemoji();
 }
 
 function card(m) {
@@ -855,7 +863,7 @@ function renderDetail() {
   const bodyHTML = S.tab === 'stats' ? statsHTML(m) : S.tab === 'timeline' ? timelineHTML(m) : overviewHTML(m);
 
   panel.innerHTML = `
-  <div class="detail-header">
+  <div class="detail-header" id="detail-header">
     <div class="detail-group">${m.group}</div>
     <div class="scoreboard">
       <div class="team-side">
@@ -885,6 +893,7 @@ function renderDetail() {
     <div class="dtab ${S.tab==='timeline'?'active':''}" onclick="setTab('timeline')">Timeline</div>
   </div>
   <div class="detail-body">${bodyHTML}</div>`;
+  parseTwemoji();
 }
 
 /* ── Stats Tab ── */
