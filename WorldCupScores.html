@@ -130,11 +130,39 @@
     /* ── LEFT PANEL ── */
     .left-panel {
       width: 380px;
-      min-width: 380px;
-      border-right: 1px solid var(--border);
+      min-width: 220px;
+      max-width: 600px;
+      border-right: none;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    /* ── RESIZE HANDLE ── */
+    .resize-handle {
+      width: 5px;
+      background: var(--border);
+      cursor: col-resize;
+      flex-shrink: 0;
+      transition: background .15s;
+      position: relative;
+      z-index: 5;
+    }
+    .resize-handle:hover,
+    .resize-handle.dragging {
+      background: var(--red);
+    }
+    .resize-handle::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 1px;
+      height: 32px;
+      background: rgba(255,255,255,.08);
+      border-radius: 1px;
     }
 
     .filter-tabs {
@@ -442,7 +470,7 @@
 <div class="main">
 
   <!-- LEFT: Match List -->
-  <div class="left-panel">
+  <div class="left-panel" id="left-panel">
     <div class="filter-tabs">
       <div class="ftab active" data-f="all" onclick="setFilter('all')">All</div>
       <div class="ftab" data-f="live" onclick="setFilter('live')">🔴 Live</div>
@@ -453,6 +481,9 @@
       <div class="loading-wrap"><div class="spinner"></div><div>Loading matches…</div></div>
     </div>
   </div>
+
+  <!-- RESIZE HANDLE -->
+  <div class="resize-handle" id="resize-handle"></div>
 
   <!-- RIGHT: Detail -->
   <div class="right-panel" id="right-panel">
@@ -1143,6 +1174,40 @@ function demoData() {
     },
   ];
 }
+
+/* ═══════════════════════════════════════════════
+   RESIZABLE SIDEBAR
+═══════════════════════════════════════════════ */
+(function () {
+  const MIN_W = 220, MAX_W = 600;
+  const handle = document.getElementById('resize-handle');
+  const panel  = document.getElementById('left-panel');
+  let dragging = false, startX = 0, startW = 0;
+
+  handle.addEventListener('mousedown', e => {
+    dragging = true;
+    startX = e.clientX;
+    startW = panel.getBoundingClientRect().width;
+    handle.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const w = Math.min(MAX_W, Math.max(MIN_W, startW + e.clientX - startX));
+    panel.style.width = w + 'px';
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    handle.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+})();
 
 /* ═══════════════════════════════════════════════
    INIT
