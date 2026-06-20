@@ -635,11 +635,11 @@ function parseESPN(data) {
       venue: comp.venue?.fullName || '',
       possession: { home: gs('possessionPct','home'), away: gs('possessionPct','away') },
       shotsOT:    { home: gs('shotsOnTarget','home'), away: gs('shotsOnTarget','away') },
-      shots:      { home: gs('shots','home'), away: gs('shots','away') },
+      shots:      { home: gs('totalShots','home'), away: gs('totalShots','away') },
       fouls:      { home: gs('foulsCommitted','home'), away: gs('foulsCommitted','away') },
       yellow:     { home: gs('yellowCards','home'), away: gs('yellowCards','away') },
       red:        { home: gs('redCards','home'), away: gs('redCards','away') },
-      corners:    { home: gs('cornerKicks','home'), away: gs('cornerKicks','away') },
+      corners:    { home: gs('wonCorners','home'), away: gs('wonCorners','away') },
       offsides:   { home: gs('offsides','home'), away: gs('offsides','away') },
       saves:      { home: gs('saves','home'), away: gs('saves','away') },
       details,
@@ -688,24 +688,28 @@ function applyMatchSummary(match, data) {
   const homeTeam = teams.find(t => t.homeAway === 'home') || teams[0];
   const awayTeam = teams.find(t => t.homeAway === 'away') || teams[1];
 
-  function gs(teamObj, name) {
-    const stat = (teamObj?.statistics || []).find(s => s.name === name || s.abbreviation === name);
-    return parseFloat(stat?.displayValue || stat?.value || 0) || 0;
+  // Try multiple name variants — ESPN uses different keys across endpoints
+  function gs(teamObj, ...names) {
+    const stats = teamObj?.statistics || [];
+    for (const name of names) {
+      const stat = stats.find(s => s.name === name || s.abbreviation === name);
+      if (stat) return parseFloat(stat.displayValue || stat.value || 0) || 0;
+    }
+    return 0;
   }
 
   if (homeTeam || awayTeam) {
-    const hp = gs(homeTeam, 'possessionPct');
-    const ap = gs(awayTeam, 'possessionPct');
-    // Only default to 50/50 when both are truly missing; don't mix real + default
-    match.possession  = (hp || ap) ? { home: hp, away: ap } : { home: 0, away: 0 };
-    match.shotsOT     = { home: gs(homeTeam,'shotsOnTarget'),  away: gs(awayTeam,'shotsOnTarget') };
-    match.shots       = { home: gs(homeTeam,'shots'),          away: gs(awayTeam,'shots') };
-    match.fouls       = { home: gs(homeTeam,'foulsCommitted'), away: gs(awayTeam,'foulsCommitted') };
-    match.yellow      = { home: gs(homeTeam,'yellowCards'),    away: gs(awayTeam,'yellowCards') };
-    match.red         = { home: gs(homeTeam,'redCards'),       away: gs(awayTeam,'redCards') };
-    match.corners     = { home: gs(homeTeam,'cornerKicks'),    away: gs(awayTeam,'cornerKicks') };
-    match.offsides    = { home: gs(homeTeam,'offsides'),       away: gs(awayTeam,'offsides') };
-    match.saves       = { home: gs(homeTeam,'saves'),          away: gs(awayTeam,'saves') };
+    const hp = gs(homeTeam, 'possessionPct', 'possession');
+    const ap = gs(awayTeam, 'possessionPct', 'possession');
+    match.possession = (hp || ap) ? { home: hp, away: ap } : { home: 0, away: 0 };
+    match.shotsOT    = { home: gs(homeTeam,'shotsOnTarget','shotOnTarget'),   away: gs(awayTeam,'shotsOnTarget','shotOnTarget') };
+    match.shots      = { home: gs(homeTeam,'totalShots','shots'),             away: gs(awayTeam,'totalShots','shots') };
+    match.fouls      = { home: gs(homeTeam,'foulsCommitted','foulCommitted'), away: gs(awayTeam,'foulsCommitted','foulCommitted') };
+    match.yellow     = { home: gs(homeTeam,'yellowCards','yellowCard'),       away: gs(awayTeam,'yellowCards','yellowCard') };
+    match.red        = { home: gs(homeTeam,'redCards','redCard'),             away: gs(awayTeam,'redCards','redCard') };
+    match.corners    = { home: gs(homeTeam,'wonCorners','cornerKicks','corners'), away: gs(awayTeam,'wonCorners','cornerKicks','corners') };
+    match.offsides   = { home: gs(homeTeam,'offsides','offside'),             away: gs(awayTeam,'offsides','offside') };
+    match.saves      = { home: gs(homeTeam,'saves','save'),                   away: gs(awayTeam,'saves','save') };
   }
 
   // ── Timeline from keyPlays or plays ──
