@@ -216,7 +216,7 @@
 
     .card-teams { display: flex; flex-direction: column; gap: 7px; }
     .team-row { display: flex; align-items: center; gap: 9px; }
-    .team-flag { font-size: 20px; width: 28px; text-align: center; }
+    .team-flag { width: 28px; height: 19px; text-align: center; display:flex; align-items:center; justify-content:center; }
     .team-name { flex: 1; font-size: 14px; font-weight: 500; color: #d0d0d0; }
     .team-name.bold { font-weight: 700; color: #fff; }
     .team-score { font-size: 20px; font-weight: 900; color: #fff; min-width: 22px; text-align: right; }
@@ -285,7 +285,7 @@
       gap: 16px;
     }
     .team-side { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-    .team-flag-lg { font-size: 46px; line-height: 1; }
+    .team-flag-lg { width: 64px; height: 43px; display:flex; align-items:center; justify-content:center; }
     .team-name-lg { font-size: 17px; font-weight: 700; text-align: center; }
     .team-abbr { font-size: 11px; color: #555; }
 
@@ -466,35 +466,42 @@ const S = {
 };
 
 /* ═══════════════════════════════════════════════
-   FLAGS
+   FLAGS — ISO codes → flagcdn.com images
+   (emoji flags don't render on Windows)
 ═══════════════════════════════════════════════ */
 const FLAG_MAP = {
-  'united states':' 🇺🇸','usa':'🇺🇸','u.s.':'🇺🇸','mexico':'🇲🇽','canada':'🇨🇦',
-  'brazil':'🇧🇷','argentina':'🇦🇷','uruguay':'🇺🇾','colombia':'🇨🇴','chile':'🇨🇱',
-  'ecuador':'🇪🇨','peru':'🇵🇪','paraguay':'🇵🇾','venezuela':'🇻🇪','bolivia':'🇧🇴',
-  'france':'🇫🇷','germany':'🇩🇪','spain':'🇪🇸','england':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','italy':'🇮🇹',
-  'portugal':'🇵🇹','netherlands':'🇳🇱','belgium':'🇧🇪','croatia':'🇭🇷','switzerland':'🇨🇭',
-  'denmark':'🇩🇰','sweden':'🇸🇪','poland':'🇵🇱','austria':'🇦🇹','ukraine':'🇺🇦',
-  'serbia':'🇷🇸','turkey':'🇹🇷','greece':'🇬🇷','czech republic':'🇨🇿','slovakia':'🇸🇰',
-  'hungary':'🇭🇺','romania':'🇷🇴','wales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿','scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','norway':'🇳🇴',
-  'finland':'🇫🇮','ireland':'🇮🇪','albania':'🇦🇱','slovenia':'🇸🇮','georgia':'🇬🇪',
-  'japan':'🇯🇵','south korea':'🇰🇷','australia':'🇦🇺','iran':'🇮🇷','saudi arabia':'🇸🇦',
-  'qatar':'🇶🇦','iraq':'🇮🇶','china':'🇨🇳','indonesia':'🇮🇩','vietnam':'🇻🇳',
-  'new zealand':'🇳🇿','uzbekistan':'🇺🇿','jordan':'🇯🇴','oman':'🇴🇲','kuwait':'🇰🇼',
-  'morocco':'🇲🇦','senegal':'🇸🇳','nigeria':'🇳🇬','cameroon':'🇨🇲','ghana':'🇬🇭',
-  'egypt':'🇪🇬','algeria':'🇩🇿','tunisia':'🇹🇳','mali':'🇲🇱','ivory coast':'🇨🇮',
-  'costa rica':'🇨🇷','panama':'🇵🇦','jamaica':'🇯🇲','honduras':'🇭🇳','el salvador':'🇸🇻',
-  'united arab emirates':'🇦🇪','bahrain':'🇧🇭','south africa':'🇿🇦','tanzania':'🇹🇿',
-  'kenya':'🇰🇪','angola':'🇦🇴','congo':'🇨🇬','zambia':'🇿🇲',
+  'united states':'us','usa':'us','u.s.':'us','mexico':'mx','canada':'ca',
+  'brazil':'br','argentina':'ar','uruguay':'uy','colombia':'co','chile':'cl',
+  'ecuador':'ec','peru':'pe','paraguay':'py','venezuela':'ve','bolivia':'bo',
+  'france':'fr','germany':'de','spain':'es','england':'gb-eng','italy':'it',
+  'portugal':'pt','netherlands':'nl','belgium':'be','croatia':'hr','switzerland':'ch',
+  'denmark':'dk','sweden':'se','poland':'pl','austria':'at','ukraine':'ua',
+  'serbia':'rs','turkey':'tr','greece':'gr','czech republic':'cz','slovakia':'sk',
+  'hungary':'hu','romania':'ro','wales':'gb-wls','scotland':'gb-sct','norway':'no',
+  'finland':'fi','ireland':'ie','albania':'al','slovenia':'si','georgia':'ge',
+  'japan':'jp','south korea':'kr','australia':'au','iran':'ir','saudi arabia':'sa',
+  'qatar':'qa','iraq':'iq','china':'cn','indonesia':'id','vietnam':'vn',
+  'new zealand':'nz','uzbekistan':'uz','jordan':'jo','oman':'om','kuwait':'kw',
+  'morocco':'ma','senegal':'sn','nigeria':'ng','cameroon':'cm','ghana':'gh',
+  'egypt':'eg','algeria':'dz','tunisia':'tn','mali':'ml','ivory coast':'ci',
+  'costa rica':'cr','panama':'pa','jamaica':'jm','honduras':'hn','el salvador':'sv',
+  'united arab emirates':'ae','bahrain':'bh','south africa':'za','tanzania':'tz',
+  'kenya':'ke','angola':'ao','congo':'cg','zambia':'zm',
 };
 
-function getFlag(name) {
-  if (!name) return '🏳️';
+function getFlagCode(name) {
+  if (!name) return null;
   const k = name.toLowerCase();
-  for (const [key, flag] of Object.entries(FLAG_MAP)) {
-    if (k === key || k.startsWith(key) || key.startsWith(k)) return flag;
+  for (const [key, code] of Object.entries(FLAG_MAP)) {
+    if (k === key || k.startsWith(key) || key.startsWith(k)) return code;
   }
-  return '🏳️';
+  return null;
+}
+
+function flagImg(name, size = 28) {
+  const code = getFlagCode(name);
+  if (!code) return `<span style="font-size:${size}px;opacity:.4">🏳</span>`;
+  return `<img src="https://flagcdn.com/w${size * 2}/${code}.png" width="${size}" height="${Math.round(size * 0.67)}" style="border-radius:2px;object-fit:cover;vertical-align:middle" alt="${name}" onerror="this.style.display='none'">`;
 }
 
 /* ═══════════════════════════════════════════════
@@ -597,11 +604,11 @@ function parseESPN(data) {
       homeTeam: home.team?.displayName || 'TBD',
       homeAbbr: home.team?.abbreviation || '',
       homeScore: parseInt(home.score || 0),
-      homeFlag: getFlag(home.team?.displayName || ''),
+      homeFlag: home.team?.displayName || '',
       awayTeam: away.team?.displayName || 'TBD',
       awayAbbr: away.team?.abbreviation || '',
       awayScore: parseInt(away.score || 0),
-      awayFlag: getFlag(away.team?.displayName || ''),
+      awayFlag: away.team?.displayName || '',
       statusText, isLive, isFinal, isHalfTime,
       matchDate: new Date(ev.date),
       venue: comp.venue?.fullName || '',
@@ -783,12 +790,12 @@ function card(m) {
     </div>
     <div class="card-teams">
       <div class="team-row">
-        <span class="team-flag">${m.homeFlag}</span>
+        <span class="team-flag">${flagImg(m.homeFlag, 24)}</span>
         <span class="team-name ${hw?'bold':''}">${m.homeTeam}</span>
         <span class="team-score ${aw?'dim':''}">${showScore ? m.homeScore : ''}</span>
       </div>
       <div class="team-row">
-        <span class="team-flag">${m.awayFlag}</span>
+        <span class="team-flag">${flagImg(m.awayFlag, 24)}</span>
         <span class="team-name ${aw?'bold':''}">${m.awayTeam}</span>
         <span class="team-score ${hw?'dim':''}">${showScore ? m.awayScore : ''}</span>
       </div>
@@ -852,7 +859,7 @@ function renderDetail() {
     <div class="detail-group">${m.group}</div>
     <div class="scoreboard">
       <div class="team-side">
-        <div class="team-flag-lg">${m.homeFlag}</div>
+        <div class="team-flag-lg">${flagImg(m.homeFlag, 56)}</div>
         <div class="team-name-lg">${m.homeTeam}</div>
         <div class="team-abbr">${m.homeAbbr}</div>
       </div>
@@ -865,7 +872,7 @@ function renderDetail() {
         <div class="score-clock">${clockBadge}</div>
       </div>
       <div class="team-side">
-        <div class="team-flag-lg">${m.awayFlag}</div>
+        <div class="team-flag-lg">${flagImg(m.awayFlag, 56)}</div>
         <div class="team-name-lg">${m.awayTeam}</div>
         <div class="team-abbr">${m.awayAbbr}</div>
       </div>
@@ -1004,12 +1011,12 @@ function overviewHTML(m) {
     </div>
     <div class="overview-card">
       <div class="ov-label">Home Side</div>
-      <div class="ov-value">${m.homeFlag} ${m.homeTeam}</div>
+      <div class="ov-value">${flagImg(m.homeFlag, 20)} ${m.homeTeam}</div>
       <div class="ov-sub">${m.homeAbbr}</div>
     </div>
     <div class="overview-card">
       <div class="ov-label">Away Side</div>
-      <div class="ov-value">${m.awayFlag} ${m.awayTeam}</div>
+      <div class="ov-value">${flagImg(m.awayFlag, 20)} ${m.awayTeam}</div>
       <div class="ov-sub">${m.awayAbbr}</div>
     </div>
   </div>`;
@@ -1023,8 +1030,8 @@ function demoData() {
   return [
     {
       id:'d1', group:'Group A — USA/Canada/Mexico',
-      homeTeam:'United States', homeAbbr:'USA', homeScore:2, homeFlag:'🇺🇸',
-      awayTeam:'Mexico', awayAbbr:'MEX', awayScore:0, awayFlag:'🇲🇽',
+      homeTeam:'United States', homeAbbr:'USA', homeScore:2, homeFlag:'United States',
+      awayTeam:'Mexico', awayAbbr:'MEX', awayScore:0, awayFlag:'Mexico',
       statusText:"74'", isLive:true, isFinal:false,
       matchDate: now, venue:'SoFi Stadium, Los Angeles',
       possession:{home:58,away:42}, shotsOT:{home:7,away:3}, shots:{home:12,away:6},
@@ -1039,8 +1046,8 @@ function demoData() {
     },
     {
       id:'d2', group:'Group B',
-      homeTeam:'France', homeAbbr:'FRA', homeScore:1, homeFlag:'🇫🇷',
-      awayTeam:'Germany', awayAbbr:'GER', awayScore:1, awayFlag:'🇩🇪',
+      homeTeam:'France', homeAbbr:'FRA', homeScore:1, homeFlag:'France',
+      awayTeam:'Germany', awayAbbr:'GER', awayScore:1, awayFlag:'Germany',
       statusText:"38'", isLive:true, isFinal:false,
       matchDate: now, venue:'MetLife Stadium, East Rutherford',
       possession:{home:52,away:48}, shotsOT:{home:4,away:5}, shots:{home:8,away:9},
@@ -1054,8 +1061,8 @@ function demoData() {
     },
     {
       id:'d3', group:'Group C',
-      homeTeam:'Brazil', homeAbbr:'BRA', homeScore:3, homeFlag:'🇧🇷',
-      awayTeam:'Argentina', awayAbbr:'ARG', awayScore:2, awayFlag:'🇦🇷',
+      homeTeam:'Brazil', homeAbbr:'BRA', homeScore:3, homeFlag:'Brazil',
+      awayTeam:'Argentina', awayAbbr:'ARG', awayScore:2, awayFlag:'Argentina',
       statusText:'FT', isLive:false, isFinal:true,
       matchDate: new Date(Date.now()-3600000), venue:'AT&T Stadium, Dallas',
       possession:{home:47,away:53}, shotsOT:{home:9,away:11}, shots:{home:14,away:17},
@@ -1073,8 +1080,8 @@ function demoData() {
     },
     {
       id:'d4', group:'Group D',
-      homeTeam:'England', homeAbbr:'ENG', homeScore:0, homeFlag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-      awayTeam:'Spain', awayAbbr:'ESP', awayScore:0, awayFlag:'🇪🇸',
+      homeTeam:'England', homeAbbr:'ENG', homeScore:0, homeFlag:'England',
+      awayTeam:'Spain', awayAbbr:'ESP', awayScore:0, awayFlag:'Spain',
       statusText:'3:00 PM ET', isLive:false, isFinal:false,
       matchDate: new Date(Date.now()+7200000), venue:'Rose Bowl, Pasadena',
       possession:{home:50,away:50}, shotsOT:{home:0,away:0}, shots:{home:0,away:0},
@@ -1084,8 +1091,8 @@ function demoData() {
     },
     {
       id:'d5', group:'Group E',
-      homeTeam:'Japan', homeAbbr:'JPN', homeScore:0, homeFlag:'🇯🇵',
-      awayTeam:'Morocco', awayAbbr:'MAR', awayScore:0, awayFlag:'🇲🇦',
+      homeTeam:'Japan', homeAbbr:'JPN', homeScore:0, homeFlag:'Japan',
+      awayTeam:'Morocco', awayAbbr:'MAR', awayScore:0, awayFlag:'Morocco',
       statusText:'6:00 PM ET', isLive:false, isFinal:false,
       matchDate: new Date(Date.now()+14400000), venue:"Levi's Stadium, Santa Clara",
       possession:{home:50,away:50}, shotsOT:{home:0,away:0}, shots:{home:0,away:0},
@@ -1095,8 +1102,8 @@ function demoData() {
     },
     {
       id:'d6', group:'Group F',
-      homeTeam:'Portugal', homeAbbr:'POR', homeScore:0, homeFlag:'🇵🇹',
-      awayTeam:'South Korea', awayAbbr:'KOR', awayScore:0, awayFlag:'🇰🇷',
+      homeTeam:'Portugal', homeAbbr:'POR', homeScore:0, homeFlag:'Portugal',
+      awayTeam:'South Korea', awayAbbr:'KOR', awayScore:0, awayFlag:'South Korea',
       statusText:'9:00 PM ET', isLive:false, isFinal:false,
       matchDate: new Date(Date.now()+21600000), venue:'Gillette Stadium, Foxborough',
       possession:{home:50,away:50}, shotsOT:{home:0,away:0}, shots:{home:0,away:0},
