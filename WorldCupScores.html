@@ -9,6 +9,19 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    /* Twemoji — constrain all converted emoji images */
+    img.emoji {
+      display: inline-block;
+      height: 1em;
+      width: 1em;
+      vertical-align: -0.15em;
+      pointer-events: none;
+    }
+    .team-flag img.emoji      { width: 28px; height: 28px; border-radius: 3px; vertical-align: middle; }
+    .team-flag-lg img.emoji   { width: 56px; height: 56px; border-radius: 4px; vertical-align: middle; }
+    .logo-ball img.emoji      { width: 26px; height: 26px; vertical-align: middle; }
+    .ov-value img.emoji       { width: 18px; height: 18px; border-radius: 2px; vertical-align: middle; }
+
     :root {
       --red: #cc0000;
       --red-dark: #990000;
@@ -463,8 +476,8 @@ const S = {
   date: new Date(),
   tab: 'stats',
   loading: false,
+  firstLoad: true,
   timer: null,
-  clockTimer: null, // unused, kept for reference
 };
 
 /* ═══════════════════════════════════════════════
@@ -500,10 +513,9 @@ function getFlag(name) {
   return '🏳️';
 }
 
-// Wrap emoji in a span sized for the context; Twemoji converts it to SVG
-function flagImg(name, size = 28) {
-  const emoji = getFlag(name);
-  return `<span style="font-size:${size}px;line-height:1;display:inline-flex;align-items:center">${emoji}</span>`;
+// Return the emoji — Twemoji converts it to an SVG img; CSS in each container controls the size
+function flagImg(name) {
+  return getFlag(name);
 }
 
 function parseTwemoji() {
@@ -523,11 +535,13 @@ function changeDate(delta) {
   const d = new Date(S.date);
   d.setDate(d.getDate() + delta);
   S.date = d;
+  S.firstLoad = true;
   document.getElementById('date-display').textContent = toDisplay(d);
   loadMatches();
 }
 function goToToday() {
   S.date = new Date();
+  S.firstLoad = true;
   document.getElementById('date-display').textContent = toDisplay(S.date);
   loadMatches();
 }
@@ -713,27 +727,30 @@ function applyMatchSummary(match, data) {
    LOAD
 ═══════════════════════════════════════════════ */
 async function loadMatches() {
-  S.loading = true;
-  renderList();
+  // Only show spinner on the very first load — silently update on auto-refresh
+  if (S.firstLoad) {
+    S.loading = true;
+    renderList();
+  }
 
   try {
     S.matches = await fetchESPN(toParam(S.date));
   } catch (e) {
     console.warn('API failed, using demo data:', e);
-    S.matches = demoData();
+    if (S.firstLoad) S.matches = demoData();
   }
 
-  // Auto-select first
+  // Auto-select first match
   if (!S.matches.find(m => m.id === S.selectedId)) {
     S.selectedId = S.matches[0]?.id || null;
   }
 
   S.loading = false;
+  S.firstLoad = false;
   document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
   renderList();
   renderDetail();
 
-  // Reload summary for selected match without resetting the active tab
   if (S.selectedId) loadSummaryForSelected();
 }
 
@@ -798,12 +815,12 @@ function card(m) {
     </div>
     <div class="card-teams">
       <div class="team-row">
-        <span class="team-flag">${flagImg(m.homeFlag, 24)}</span>
+        <span class="team-flag">${flagImg(m.homeFlag)}</span>
         <span class="team-name ${hw?'bold':''}">${m.homeTeam}</span>
         <span class="team-score ${aw?'dim':''}">${showScore ? m.homeScore : ''}</span>
       </div>
       <div class="team-row">
-        <span class="team-flag">${flagImg(m.awayFlag, 24)}</span>
+        <span class="team-flag">${flagImg(m.awayFlag)}</span>
         <span class="team-name ${aw?'bold':''}">${m.awayTeam}</span>
         <span class="team-score ${hw?'dim':''}">${showScore ? m.awayScore : ''}</span>
       </div>
@@ -867,7 +884,7 @@ function renderDetail() {
     <div class="detail-group">${m.group}</div>
     <div class="scoreboard">
       <div class="team-side">
-        <div class="team-flag-lg">${flagImg(m.homeFlag, 56)}</div>
+        <div class="team-flag-lg">${flagImg(m.homeFlag)}</div>
         <div class="team-name-lg">${m.homeTeam}</div>
         <div class="team-abbr">${m.homeAbbr}</div>
       </div>
@@ -880,7 +897,7 @@ function renderDetail() {
         <div class="score-clock">${clockBadge}</div>
       </div>
       <div class="team-side">
-        <div class="team-flag-lg">${flagImg(m.awayFlag, 56)}</div>
+        <div class="team-flag-lg">${flagImg(m.awayFlag)}</div>
         <div class="team-name-lg">${m.awayTeam}</div>
         <div class="team-abbr">${m.awayAbbr}</div>
       </div>
@@ -1020,12 +1037,12 @@ function overviewHTML(m) {
     </div>
     <div class="overview-card">
       <div class="ov-label">Home Side</div>
-      <div class="ov-value">${flagImg(m.homeFlag, 20)} ${m.homeTeam}</div>
+      <div class="ov-value">${flagImg(m.homeFlag)} ${m.homeTeam}</div>
       <div class="ov-sub">${m.homeAbbr}</div>
     </div>
     <div class="overview-card">
       <div class="ov-label">Away Side</div>
-      <div class="ov-value">${flagImg(m.awayFlag, 20)} ${m.awayTeam}</div>
+      <div class="ov-value">${flagImg(m.awayFlag)} ${m.awayTeam}</div>
       <div class="ov-sub">${m.awayAbbr}</div>
     </div>
   </div>`;
