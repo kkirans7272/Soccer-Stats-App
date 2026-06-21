@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WC 2026 — OBS Overlay</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    img.emoji {
+      display: inline-block;
+      height: 1em; width: 1em;
+      vertical-align: -0.1em;
+      pointer-events: none;
+    }
+    .flag img.emoji { width: 22px; height: 22px; border-radius: 2px; vertical-align: middle; }
+
+    :root {
+      --red: #cc0000;
+      --live: #00c853;
+      --ht: #64a0ff;
+      --upcoming: #f5a623;
+      --sidebar-w: 280px;
+      --sidebar-bg: rgba(8, 8, 8, 0.88);
+      --card-bg: rgba(255,255,255,0.04);
+      --card-border: rgba(255,255,255,0.07);
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      font-family: 'Roboto', Arial, sans-serif;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-w);
+      height: 100%;
+      background: var(--sidebar-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-right: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── HEADER ── */
+    .sb-header {
+      background: var(--red);
+      padding: 10px 14px 9px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .sb-title {
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+    }
+    .sb-title span { font-weight: 400; opacity: 0.7; }
+    .live-pill {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: rgba(0,200,83,0.18);
+      color: var(--live);
+      border: 1px solid rgba(0,200,83,0.35);
+      letter-spacing: 0.5px;
+      animation: blink 2s infinite;
+      display: none;
+    }
+    .live-pill.visible { display: inline-block; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+    /* ── DATE STRIP ── */
+    .sb-date {
+      padding: 5px 14px;
+      font-size: 10px;
+      color: rgba(255,255,255,0.35);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .sb-date-updated { font-size: 9px; color: rgba(255,255,255,0.2); }
+
+    /* ── MATCH LIST ── */
+    .sb-list {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 6px 0 16px;
+    }
+    .sb-list::-webkit-scrollbar { display: none; }
+
+    /* fade at the bottom */
+    .sb-fade {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: var(--sidebar-w);
+      height: 48px;
+      background: linear-gradient(to bottom, transparent, rgba(8,8,8,0.88));
+      pointer-events: none;
+    }
+
+    /* ── SECTION LABEL ── */
+    .sb-section {
+      padding: 8px 14px 4px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: rgba(255,255,255,0.2);
+    }
+
+    /* ── MATCH CARD ── */
+    .sb-card {
+      margin: 3px 8px;
+      padding: 9px 10px;
+      border-radius: 7px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      transition: background 0.2s;
+    }
+    .sb-card.is-live {
+      background: rgba(0,200,83,0.06);
+      border-color: rgba(0,200,83,0.18);
+    }
+    .sb-card.is-ht {
+      background: rgba(100,160,255,0.06);
+      border-color: rgba(100,160,255,0.18);
+    }
+
+    /* badge row */
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 7px;
+    }
+    .card-group-name {
+      font-size: 9px;
+      color: rgba(255,255,255,0.25);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .cbadge {
+      font-size: 8px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cbadge-live { color: var(--live); background: rgba(0,200,83,0.12); border: 1px solid rgba(0,200,83,0.3); }
+    .cbadge-ht   { color: var(--ht);   background: rgba(100,160,255,0.1); border: 1px solid rgba(100,160,255,0.3); }
+    .cbadge-ft   { color: #555;        background: rgba(150,150,150,0.08); border: 1px solid rgba(255,255,255,0.08); }
+    .cbadge-up   { color: var(--upcoming); background: rgba(245,166,35,0.08); border: 1px solid rgba(245,166,35,0.25); }
+
+    /* teams */
+    .card-teams { display: flex; flex-direction: column; gap: 5px; }
+    .team-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .flag { width: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .tname {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.75);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tname.winner { font-weight: 700; color: #fff; }
+    .tscore {
+      font-size: 16px;
+      font-weight: 900;
+      color: #fff;
+      min-width: 18px;
+      text-align: right;
+    }
+    .tscore.loser { color: rgba(255,255,255,0.3); }
+
+    /* ── LOADING ── */
+    .sb-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 120px;
+      gap: 10px;
+      color: rgba(255,255,255,0.2);
+      font-size: 11px;
+    }
+    .spinner {
+      width: 22px; height: 22px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── NO MATCHES ── */
+    .sb-empty {
+      padding: 20px 14px;
+      text-align: center;
+      font-size: 11px;
+      color: rgba(255,255,255,0.2);
+    }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sb-header">
+    <div class="sb-title">⚽ World Cup <span>2026</span></div>
+    <div class="live-pill" id="live-pill">● LIVE</div>
+  </div>
+  <div class="sb-date">
+    <span id="date-label"></span>
+    <span class="sb-date-updated" id="updated-label"></span>
+  </div>
+  <div class="sb-list" id="match-list">
+    <div class="sb-loading"><div class="spinner"></div><span>Loading…</span></div>
+  </div>
+  <div class="sb-fade"></div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   FLAGS
+══════════════════════════════════════════════ */
+const FLAG_MAP = {
+  'united states':'🇺🇸','usa':'🇺🇸','mexico':'🇲🇽','canada':'🇨🇦',
+  'brazil':'🇧🇷','argentina':'🇦🇷','uruguay':'🇺🇾','colombia':'🇨🇴','chile':'🇨🇱',
+  'ecuador':'🇪🇨','peru':'🇵🇪','paraguay':'🇵🇾','venezuela':'🇻🇪','bolivia':'🇧🇴',
+  'france':'🇫🇷','germany':'🇩🇪','spain':'🇪🇸','england':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','italy':'🇮🇹',
+  'portugal':'🇵🇹','netherlands':'🇳🇱','belgium':'🇧🇪','croatia':'🇭🇷','switzerland':'🇨🇭',
+  'denmark':'🇩🇰','sweden':'🇸🇪','poland':'🇵🇱','austria':'🇦🇹','ukraine':'🇺🇦',
+  'serbia':'🇷🇸','turkey':'🇹🇷','czech republic':'🇨🇿','slovakia':'🇸🇰',
+  'hungary':'🇭🇺','romania':'🇷🇴','wales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿','scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','norway':'🇳🇴',
+  'finland':'🇫🇮','ireland':'🇮🇪','albania':'🇦🇱','slovenia':'🇸🇮','georgia':'🇬🇪',
+  'japan':'🇯🇵','south korea':'🇰🇷','australia':'🇦🇺','iran':'🇮🇷','saudi arabia':'🇸🇦',
+  'qatar':'🇶🇦','iraq':'🇮🇶','china':'🇨🇳','indonesia':'🇮🇩',
+  'morocco':'🇲🇦','senegal':'🇸🇳','nigeria':'🇳🇬','cameroon':'🇨🇲','ghana':'🇬🇭',
+  'egypt':'🇪🇬','algeria':'🇩🇿','tunisia':'🇹🇳','mali':'🇲🇱','ivory coast':'🇨🇮',
+  'costa rica':'🇨🇷','panama':'🇵🇦','jamaica':'🇯🇲','honduras':'🇭🇳','el salvador':'🇸🇻',
+  'united arab emirates':'🇦🇪','south africa':'🇿🇦',
+  'new zealand':'🇳🇿','uzbekistan':'🇺🇿',
+};
+
+function getFlag(name) {
+  if (!name) return '🏳️';
+  const k = name.toLowerCase();
+  for (const [key, flag] of Object.entries(FLAG_MAP)) {
+    if (k === key || k.startsWith(key) || key.startsWith(k)) return flag;
+  }
+  return '🏳️';
+}
+
+function parseTwemoji() {
+  twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });
+}
+
+/* ══════════════════════════════════════════════
+   API
+══════════════════════════════════════════════ */
+function toParam(d) {
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+}
+
+async function fetchMatches() {
+  const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${toParam(new Date())}`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(r.status);
+  const data = await r.json();
+  return parseESPN(data);
+}
+
+function parseESPN(data) {
+  return (data.events || []).map(ev => {
+    const comp = ev.competitions?.[0] || {};
+    const comps = comp.competitors || [];
+    const home = comps.find(c => c.homeAway === 'home') || comps[0] || {};
+    const away = comps.find(c => c.homeAway === 'away') || comps[1] || {};
+    const st = comp.status || {};
+    const stType = st.type || {};
+
+    let statusText, isLive = false, isFinal = false, isHalfTime = false;
+    if (stType.completed) {
+      statusText = 'FT'; isFinal = true;
+    } else if (stType.name === 'halftime' || stType.shortDetail === 'HT') {
+      statusText = 'HT'; isLive = true; isHalfTime = true;
+    } else if (stType.state === 'in') {
+      statusText = st.displayClock || 'LIVE'; isLive = true;
+    } else {
+      statusText = new Date(ev.date).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:true });
+    }
+
+    const group = (() => {
+      const notes = comp.notes || [];
+      for (const n of notes) if (n.headline) return n.headline;
+      return ev.season?.slug || '';
+    })();
+
+    return {
+      id: ev.id, group,
+      homeTeam: home.team?.displayName || 'TBD',
+      homeScore: parseInt(home.score || 0),
+      homeFlag: home.team?.displayName || '',
+      awayTeam: away.team?.displayName || 'TBD',
+      awayScore: parseInt(away.score || 0),
+      awayFlag: away.team?.displayName || '',
+      statusText, isLive, isFinal, isHalfTime,
+    };
+  });
+}
+
+/* ══════════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════════ */
+function renderCard(m) {
+  const hw = m.isFinal && m.homeScore > m.awayScore;
+  const aw = m.isFinal && m.awayScore > m.homeScore;
+  const showScore = m.isLive || m.isFinal;
+
+  let badge;
+  if (m.isHalfTime)   badge = `<span class="cbadge cbadge-ht">⏸ HT</span>`;
+  else if (m.isLive)  badge = `<span class="cbadge cbadge-live">● ${m.statusText}</span>`;
+  else if (m.isFinal) badge = `<span class="cbadge cbadge-ft">FT</span>`;
+  else                badge = `<span class="cbadge cbadge-up">${m.statusText}</span>`;
+
+  const cls = m.isHalfTime ? 'sb-card is-ht' : m.isLive ? 'sb-card is-live' : 'sb-card';
+
+  return `
+  <div class="${cls}">
+    <div class="card-top">
+      <span class="card-group-name">${m.group}</span>
+      ${badge}
+    </div>
+    <div class="card-teams">
+      <div class="team-row">
+        <span class="flag">${getFlag(m.homeFlag)}</span>
+        <span class="tname ${hw?'winner':''}">${m.homeTeam}</span>
+        <span class="tscore ${aw?'loser':''}">${showScore ? m.homeScore : '–'}</span>
+      </div>
+      <div class="team-row">
+        <span class="flag">${getFlag(m.awayFlag)}</span>
+        <span class="tname ${aw?'winner':''}">${m.awayTeam}</span>
+        <span class="tscore ${hw?'loser':''}">${showScore ? m.awayScore : '–'}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function render(matches) {
+  const list = document.getElementById('match-list');
+  const pill = document.getElementById('live-pill');
+
+  const live     = matches.filter(m => m.isLive);
+  const upcoming = matches.filter(m => !m.isLive && !m.isFinal);
+  const final    = matches.filter(m => m.isFinal);
+
+  pill.classList.toggle('visible', live.length > 0);
+  if (live.length > 1) pill.textContent = `● ${live.length} LIVE`;
+  else pill.textContent = '● LIVE';
+
+  if (!matches.length) {
+    list.innerHTML = `<div class="sb-empty">No matches today</div>`;
+    return;
+  }
+
+  let html = '';
+  if (live.length) {
+    html += `<div class="sb-section">🔴 Live</div>`;
+    live.forEach(m => html += renderCard(m));
+  }
+  if (upcoming.length) {
+    html += `<div class="sb-section">Upcoming</div>`;
+    upcoming.forEach(m => html += renderCard(m));
+  }
+  if (final.length) {
+    html += `<div class="sb-section">Final</div>`;
+    final.forEach(m => html += renderCard(m));
+  }
+
+  list.innerHTML = html;
+  parseTwemoji();
+}
+
+/* ══════════════════════════════════════════════
+   DEMO DATA (fallback)
+══════════════════════════════════════════════ */
+function demoMatches() {
+  return [
+    { id:'d1', group:'Group A', homeTeam:'United States', homeScore:2, homeFlag:'United States', awayTeam:'Mexico', awayScore:0, awayFlag:'Mexico', statusText:"74'", isLive:true, isFinal:false, isHalfTime:false },
+    { id:'d2', group:'Group B', homeTeam:'France', homeScore:1, homeFlag:'France', awayTeam:'Germany', awayScore:1, awayFlag:'Germany', statusText:"38'", isLive:true, isFinal:false, isHalfTime:false },
+    { id:'d3', group:'Group C', homeTeam:'Brazil', homeScore:3, homeFlag:'Brazil', awayTeam:'Argentina', awayScore:2, awayFlag:'Argentina', statusText:'FT', isLive:false, isFinal:true, isHalfTime:false },
+    { id:'d4', group:'Group D', homeTeam:'England', homeScore:0, homeFlag:'England', awayTeam:'Spain', awayScore:0, awayFlag:'Spain', statusText:'3:00 PM', isLive:false, isFinal:false, isHalfTime:false },
+    { id:'d5', group:'Group E', homeTeam:'Japan', homeScore:0, homeFlag:'Japan', awayTeam:'Morocco', awayScore:0, awayFlag:'Morocco', statusText:'6:00 PM', isLive:false, isFinal:false, isHalfTime:false },
+  ];
+}
+
+/* ══════════════════════════════════════════════
+   INIT & REFRESH LOOP
+══════════════════════════════════════════════ */
+async function refresh() {
+  try {
+    const matches = await fetchMatches();
+    render(matches);
+  } catch (e) {
+    console.warn('API failed, using demo data');
+    render(demoMatches());
+  }
+
+  const now = new Date();
+  document.getElementById('updated-label').textContent =
+    now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:true });
+}
+
+function init() {
+  document.getElementById('date-label').textContent =
+    new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+  refresh();
+  setInterval(refresh, 30000);
+}
+
+init();
+</script>
+</body>
+</html>
